@@ -1,0 +1,35 @@
+"use client";
+
+import { useState } from "react";
+import { Plus } from "lucide-react";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
+} from "@/components/ui/sheet";// Ensure CategoryForm accepts 'initialData' prop
+import { CategoryForm } from "./menu-category-form";
+
+export function AddMenuCategorySheet() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <button className="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors flex gap-4 items-center">
+          <Plus size={18} /> Add Category
+        </button>
+      </SheetTrigger>
+      <SheetContent className="sm:max-w-135 overflow-y-auto">
+        <SheetHeader className="mb-8">
+          <SheetTitle>Add Category</SheetTitle>
+        </SheetHeader>
+        {/* Pass the existing dessert data as initialData to the form */}
+        <CategoryForm 
+          onSuccess={() => setOpen(false)} 
+        />
+      </SheetContent>
+    </Sheet>
+  );
+}
