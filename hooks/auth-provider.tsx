@@ -4,16 +4,19 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
 
+// auth-provider.tsx
 type AuthContextType = {
   user: User | null;
   role: string | null;
   isLoading: boolean;
+  signOut: () => Promise<void>; // Add this
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   role: null,
   isLoading: true,
+  signOut:()=>new Promise(()=>{})
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -42,8 +45,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
+  // ... inside AuthProvider function
+const signOut = async () => {
+  await supabase.auth.signOut();
+  window.location.href = "/login"; // Force a clean redirect
+};
+
   return (
-    <AuthContext.Provider value={{ user, role, isLoading }}>
+    <AuthContext.Provider value={{ user, role, isLoading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

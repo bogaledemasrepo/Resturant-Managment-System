@@ -39,11 +39,18 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  // Protect Admin Routes
-  if (pathname.startsWith("/admin")) {
-    if (!user || role !== "admin") {
+    if (!user) {
       const loginUrl = new URL("/login", request.url);
       console.log("Redirecting to login from admin route", loginUrl.toString());
+      // Pass the current path so we can redirect back after login
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  // Protect Admin Routes
+  if (pathname.startsWith("/admin")) {
+    if (role !== "admin") {
+      const loginUrl = new URL("/customer", request.url);
+      console.log("Redirecting to customer from admin route", loginUrl.toString());
       // Pass the current path so we can redirect back after login
       loginUrl.searchParams.set("next", pathname);
       return NextResponse.redirect(loginUrl);
