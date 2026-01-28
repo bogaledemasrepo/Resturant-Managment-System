@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
-import { DeleteProductButton } from "./delete-dessert-btn";
+import { DeleteProductButton } from "./delete-menu-btn";
 import { EditProductSheet } from "./edit-product-sheet";
 interface MenuItem {
     id: string;

@@ -9,7 +9,7 @@ import {
   SheetTitle, 
   SheetTrigger 
 } from "@/components/ui/sheet";// Ensure MenuForm accepts 'initialData' prop
-import { MenuForm } from "./product-form";
+import { MenuForm } from "./menu-form";
 
 export function AddMenuItemSheet({categories}:{categories:{id:string,name:string,description:string}[]}) {
   const [open, setOpen] = useState(false);

@@ -22,6 +22,9 @@ export async function createMenuItem(values: MenuItemFormValues) {
     .from("menu_items")
     .insert([{
       name: validatedFields.data.name,
+      price:validatedFields.data.price,
+      category_id:validatedFields.data.category_id,
+      image_url:validatedFields.data.image_url,
       description: validatedFields.data.description,
     }])
     .select()
@@ -33,7 +36,7 @@ export async function createMenuItem(values: MenuItemFormValues) {
   }
 
   // 2. Refresh the inventory page automatically
-  revalidatePath("/admin/products");
+  revalidatePath("/admin/menus-list");
   return { success: true };
 }
 

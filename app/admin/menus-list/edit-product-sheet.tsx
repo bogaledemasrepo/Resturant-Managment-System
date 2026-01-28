@@ -9,7 +9,7 @@ import {
   SheetTitle, 
   SheetTrigger 
 } from "@/components/ui/sheet";// Ensure ProductForm accepts 'initialData' prop
-import { MenuForm } from "./product-form";
+import { MenuForm } from "./menu-form";
 
 interface MenuItem {
     id: string;

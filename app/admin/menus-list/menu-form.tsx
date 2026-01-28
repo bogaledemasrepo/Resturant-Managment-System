@@ -42,11 +42,15 @@ interface MenuItem {
 }
 interface MenuFormProps {
   initialData?: MenuItem;
-  categories:{id:string,name:string,description:string}[]
+  categories: { id: string; name: string; description: string }[];
   onSuccess?: () => void;
 }
 
-export function MenuForm({ initialData, onSuccess,categories }: MenuFormProps) {
+export function MenuForm({
+  initialData,
+  onSuccess,
+  categories,
+}: MenuFormProps) {
   const supabase = createClient();
 
   // Note: Ensure your Zod schema allows 'image_file' as a File object temporarily
@@ -73,19 +77,28 @@ export function MenuForm({ initialData, onSuccess,categories }: MenuFormProps) {
     try {
       let finalImageUrl = data.image_url;
 
-      // 1. Upload to Supabase only if a new file was selected
       if (imageFile) {
         const fileExt = imageFile.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const fileName = `${Date.now()}.${fileExt}`;
         const filePath = `menus/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
+        // 1. Perform the Upload
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from("Menu-images")
-          .upload(filePath, imageFile);
-          console.log("Error image upload:", uploadError);
+          .upload(filePath, imageFile, {
+            cacheControl: "3600",
+            upsert: false, // Set to true if you want to overwrite
+          });
 
-        if (uploadError) throw new Error("Image upload failed");
+        if (uploadError) {
+          console.error("FULL UPLOAD ERROR:", uploadError); // Check the "message" and "status"
+          throw new Error(`Upload failed: ${uploadError.message}`);
+        }
 
+        // 2. Log success to confirm the file is there
+        console.log("Upload successful:", uploadData.path);
+
+        // 3. Get the URL
         const { data: urlData } = supabase.storage
           .from("Menu-images")
           .getPublicUrl(filePath);
@@ -95,21 +108,17 @@ export function MenuForm({ initialData, onSuccess,categories }: MenuFormProps) {
 
       const payload = { ...data, image_url: finalImageUrl };
 
+      console.log(payload,"RRRRRRRRRRRRRRRRRRRRRR")
+
       // 2. Database Action
       if (initialData) {
-        console.log(
-          "Updating Menu Item with ID:",
-          initialData.id,
-          "Payload:",
-          payload,
-        );
-        await updateMenuItem(initialData.id, payload);
-        toast.success("Menu updated successfully!");
+        const { error } = await updateMenuItem(initialData.id, payload);
+        if (!error) toast.success("Menu updated successfully!");
+        else toast.error(error);
       } else {
-        console.log("Creating Menu Item with Payload:", payload);
-        const response = await createMenuItem(payload);
-        console.log("Create Menu Item Response:", response);
-        toast.success("Menu created successfully!");
+        const { error } = await createMenuItem(payload);
+        if (!error) toast.success("Menu created successfully!");
+        else toast.error(error);
       }
 
       onSuccess?.();
@@ -119,7 +128,6 @@ export function MenuForm({ initialData, onSuccess,categories }: MenuFormProps) {
       else toast.error("Something went wrong");
     }
   }
-console.log(categories,"CATEGORIES",initialData)
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -127,18 +135,13 @@ console.log(categories,"CATEGORIES",initialData)
       className="bg-white p-6 rounded-xl border shadow-sm max-w-2xl mx-auto"
     >
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit, (errors) =>
-            console.log("Validation Errors:", errors),
-          )}
-          className="space-y-6"
-        >
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="flex gap-4 h-40">
             {/* Image Upload Area */}
             <div className="space-y-2">
               <FormLabel>Menu Image</FormLabel>
               <ImageUpload
-                value={imageFile || form.getValues("image_url")||""}
+                value={imageFile || form.getValues("image_url") || ""}
                 onChange={(file) => setImageFile(file)}
                 onRemove={() => {
                   setImageFile(null);
@@ -188,7 +191,11 @@ console.log(categories,"CATEGORIES",initialData)
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <Select
-                    onValueChange={(val:string)=>field.onChange(categories.find(Item=>Item.name==val)?.id)}
+                    onValueChange={(val: string) =>
+                      field.onChange(
+                        categories.find((Item) => Item.id == val)?.id || "",
+                      )
+                    }
                     defaultValue={field.value}
                   >
                     <FormControl>
@@ -197,8 +204,11 @@ console.log(categories,"CATEGORIES",initialData)
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map(Item=>
-                      <SelectItem key={Item.id} value={Item.id}>{Item.name}</SelectItem>)}
+                      {categories.map((Item) => (
+                        <SelectItem key={Item.id} value={Item.id}>
+                          {Item.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
